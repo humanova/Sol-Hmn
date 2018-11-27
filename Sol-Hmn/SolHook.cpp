@@ -89,6 +89,12 @@ float SolHook::GetPlayerHealth(int p_id)
 	return plHealth;
 }
 
+float SolHook::GetCurrentWeaponVel()
+{
+	float weaponVel = readMem<float>(game_handle, SoldatOffset::playerWeaponVel);
+	return weaponVel;
+}
+
 BYTE SolHook::GetPlayerTeam(int p_id)
 {
 	float plTeam = readMem<BYTE>(game_handle, SoldatOffset::playerTeam + ((p_id - 1) * playerOffset));
@@ -163,12 +169,26 @@ void SolHook::Aimbot(int p_id)
 void SolHook::Aimbot()
 {
 	Enemy enemy = GetClosestEnemyCursor();
-	Vec2 aimPos = Map2Cursor(enemy.pos);
-	aimPos.x += -1 * (GetPlayerVel(val.playerID).x - enemy.vel.x) * (1 / winset.Game2WindowRatioX);
-	aimPos.y += -1 * (GetPlayerVel(val.playerID).y - enemy.vel.y) * (1 / winset.Game2WindowRatioY);
-	if (CalcDistance(enemy.pos, val.mapCursorPos) < 1000)
+	float enemyCursorDistance = CalcDistance(enemy.pos, val.mapCursorPos);
+	float enemyDistance = CalcDistance(enemy.pos, val.playerPos);
+	
+
+	if ((enemy.id != 0) && 
+		(enemy.id != val.unAimbotID) && 
+		(enemyCursorDistance < settings.aimbotCursorDistance) && 
+		(enemyDistance < settings.aimbotPlayerDistance))
 	{
-			SetCursorPos(aimPos);
+		float bulletTime = enemyDistance / val.currentWeaponVel;
+		Vec2 aimPos = Map2Cursor(enemy.pos);
+		aimPos.x += -1 * (GetPlayerVel(val.playerID).x - (enemy.vel.x * bulletTime)) * (1 / winset.Game2WindowRatioX);
+		aimPos.y += -1 * (GetPlayerVel(val.playerID).y - (enemy.vel.y * bulletTime)) * (1 / winset.Game2WindowRatioY);
+
+		SetCursorPos(aimPos);
+		val.aimbotID = enemy.id;
+	}
+	else
+	{
+		val.aimbotID = 0;
 	}
 }
 
@@ -258,6 +278,15 @@ void SolHook::CheckEvents()
 		Tele2Player(val.stickiedPlayerID);
 	}
 
+	if (settings.aimbot & toggles.aimbot)
+	{
+		if (GetAsyncKeyState(VK_CONTROL) & 1)
+		{
+			val.unAimbotID = val.aimbotID;
+		}
+		Aimbot();
+	}
+
 	if (GetAsyncKeyState(VK_HOME) & 1)
 	{
 		PrintStatus();
@@ -276,6 +305,7 @@ void SolHook::RefreshVal()
 	val.playerPos = GetPlayerPos(val.playerID);
 	val.playerCount = GetPlayerCount();
 	val.currentWeapon = GetCurrentWeapon(val.playerID);
+	val.currentWeaponVel = GetCurrentWeaponVel();
 	val.playerVel = GetPlayerVel(val.playerID);
 	val.cursorPos = GetCursorPos();
 	val.mapCursorPos = Window2Map();
@@ -360,8 +390,10 @@ void SolHook::PrintStatus()
 	else { TypeRed(2); printf("4 - InfiniteKnife(F4) : OFF\n"); }
 	if (toggles.stick2player && settings.stick2player) { TypeGreen(2); printf("5 - Stick2Player(F5) : ON\n"); }
 	else { TypeRed(2); printf("5 - Stick2Player(F5) : OFF\n"); }
-	if (toggles.stabilizer && settings.stabilizer) { TypeGreen(2); printf("6 - CamStabilizer(F6) : ON\n"); }
-	else { TypeRed(2); printf("6 - CamStabilizer(F6) : OFF\n"); }
+	if (toggles.aimbot && settings.aimbot) { TypeGreen(2); printf("6 - Aimbot(F6) : ON\n"); }
+	else { TypeRed(2); printf("6 - Aimbot(F6) : OFF\n"); }
+	if (toggles.stabilizer && settings.stabilizer) { TypeGreen(2); printf("7 - CamStabilizer(F7) : ON\n"); }
+	else { TypeRed(2); printf("7 - CamStabilizer(F7) : OFF\n"); }
 }
 
 float SolHook::CalcDistance(Vec2 pos1, Vec2 pos2)
@@ -510,6 +542,11 @@ void SolHook::CheckToggles()
 	}
 
 	if (GetAsyncKeyState(VK_F6) & 1)
+	{
+		toggles.aimbot = !(toggles.aimbot);
+	}
+
+	if (GetAsyncKeyState(VK_F7) & 1)
 	{
 		toggles.stabilizer = !(toggles.stabilizer);
 	}

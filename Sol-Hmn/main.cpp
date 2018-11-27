@@ -12,9 +12,7 @@ int main()
 	
 	while (1)
 	{
-		Sol.Aimbot();
 		Sol.RefreshVal();
-		Sol.DebugSomething();
 		Sol.RefreshEnemy();
 		Sol.CheckEvents();
 		

@@ -16,6 +16,7 @@ enum SoldatOffset
 	playerVelY = 0x768A98,
 
 	playerWeapon = 0x8D7FBE,
+	playerWeaponVel = 0x8E45C4,
 
 	playerHealth = 0x8CC004,
 

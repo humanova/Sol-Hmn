@@ -38,9 +38,12 @@ public:
 		int playerCount;
 		int enemyCount;
 		int playerID;
+		int aimbotID;
+		int unAimbotID;
 		int stickiedPlayerID;
 		BYTE playerTeam;
 		BYTE currentWeapon;
+		float currentWeaponVel;
 
 		
 	};
@@ -61,6 +64,9 @@ public:
 		bool stabilizer = 1;
 		bool tele2closestEnemy = 1;
 		bool stick2player = 1;
+		bool aimbot = 1;
+		float aimbotCursorDistance = 40;
+		float aimbotPlayerDistance = 635;
 
 	}defaultSettings;
 
@@ -72,6 +78,7 @@ public:
 		bool stabilizer = 0;
 		bool tele2closestEnemy = 0;
 		bool stick2player = 0;
+		bool aimbot = 0;
 	};
 
 	SolHook();
@@ -86,6 +93,7 @@ public:
 	Vec2 GetCameraPos();
 	Vec2 GetPlayerVel(int p_id);
 	float GetPlayerHealth(int p_id);
+	float GetCurrentWeaponVel();
 	BYTE GetPlayerTeam(int p_id);
 
 	Vec2 GetCursorPos();
