@@ -92,6 +92,10 @@ float SolHook::GetPlayerHealth(int p_id)
 float SolHook::GetCurrentWeaponVel()
 {
 	float weaponVel = readMem<float>(game_handle, SoldatOffset::playerWeaponVel);
+	if (weaponVel == 0)
+	{
+		return 1;
+	}
 	return weaponVel;
 }
 
@@ -220,6 +224,27 @@ void SolHook::FixBarret()
 	writeMem<short>(game_handle, SoldatOffset::barretStartupTime, 0);
 }
 
+void SolHook::SpeedHack(bool isRight)
+{
+	if (!(val.playerVel.x > 4.8) &&
+		!(val.playerVel.x < -4.8) &&
+		!(val.playerVel.x < 2 && val.playerVel.x > -2))
+	{
+		if (0 < val.playerVel.x < 5.5 && isRight)
+		{
+			Vec2 new_vel = val.playerVel;
+			new_vel.x += settings.speedHackVal;
+			SetPlayerVel(val.playerID, new_vel);
+		}
+		else if (0 > val.playerVel.x > -5.5 && !isRight)
+		{
+			Vec2 new_vel = val.playerVel;
+			new_vel.x -= settings.speedHackVal;
+			SetPlayerVel(val.playerID, new_vel);
+		}
+	}
+}
+
 void SolHook::CheckEvents()
 {
 	CheckToggles();
@@ -285,6 +310,21 @@ void SolHook::CheckEvents()
 			val.unAimbotID = val.aimbotID;
 		}
 		Aimbot();
+	}
+
+	if (settings.speedHack & toggles.speedHack)
+	{
+		//Left (negative way)
+		if (GetAsyncKeyState(0x41) & 1)
+		{
+			SpeedHack(0);
+		}
+
+		//Right (positive way)
+		if (GetAsyncKeyState(0x44) & 1)
+		{
+			SpeedHack(1);
+		}
 	}
 
 	if (GetAsyncKeyState(VK_HOME) & 1)
@@ -392,8 +432,10 @@ void SolHook::PrintStatus()
 	else { TypeRed(2); printf("5 - Stick2Player(F5) : OFF\n"); }
 	if (toggles.aimbot && settings.aimbot) { TypeGreen(2); printf("6 - Aimbot(F6) : ON\n"); }
 	else { TypeRed(2); printf("6 - Aimbot(F6) : OFF\n"); }
-	if (toggles.stabilizer && settings.stabilizer) { TypeGreen(2); printf("7 - CamStabilizer(F7) : ON\n"); }
-	else { TypeRed(2); printf("7 - CamStabilizer(F7) : OFF\n"); }
+	if (toggles.speedHack && settings.speedHack) { TypeGreen(2); printf("7 - SpeedHack(F7) : ON\n"); }
+	else { TypeRed(2); printf("7 - SpeedHack(F7) : OFF\n"); }
+	if (toggles.stabilizer && settings.stabilizer) { TypeGreen(2); printf("8 - CamStabilizer(F8) : ON\n"); }
+	else { TypeRed(2); printf("8 - CamStabilizer(F8) : OFF\n"); }
 }
 
 float SolHook::CalcDistance(Vec2 pos1, Vec2 pos2)
@@ -419,7 +461,8 @@ SolHook::Enemy SolHook::GetClosestEnemy()
 			}
 			else
 			{
-				if (CalcDistance(enemyList[en].pos, val.playerPos) < CalcDistance(closestEnemy.pos, val.playerPos))
+				if (CalcDistance(enemyList[en].pos, val.playerPos) < 
+					CalcDistance(closestEnemy.pos, val.playerPos))
 				{
 					closestEnemy = enemyList[en];
 				}
@@ -547,6 +590,11 @@ void SolHook::CheckToggles()
 	}
 
 	if (GetAsyncKeyState(VK_F7) & 1)
+	{
+		toggles.speedHack = !(toggles.speedHack);
+	}
+
+	if (GetAsyncKeyState(VK_F8) & 1)
 	{
 		toggles.stabilizer = !(toggles.stabilizer);
 	}

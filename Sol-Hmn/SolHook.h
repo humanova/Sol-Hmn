@@ -7,7 +7,6 @@ struct Vec2
 	float y = 0;
 };
 
-
 class SolHook
 {
 
@@ -44,8 +43,6 @@ public:
 		BYTE playerTeam;
 		BYTE currentWeapon;
 		float currentWeaponVel;
-
-		
 	};
 
 	struct Enemy
@@ -65,8 +62,10 @@ public:
 		bool tele2closestEnemy = 1;
 		bool stick2player = 1;
 		bool aimbot = 1;
+		bool speedHack = 1;
 		float aimbotCursorDistance = 40;
 		float aimbotPlayerDistance = 635;
+		float speedHackVal = 0.00007;
 
 	}defaultSettings;
 
@@ -79,6 +78,7 @@ public:
 		bool tele2closestEnemy = 0;
 		bool stick2player = 0;
 		bool aimbot = 0;
+		bool speedHack = 0;
 	};
 
 	SolHook();
@@ -107,13 +107,14 @@ public:
 	void SetCursorPos(Vec2 cursor_pos);
 	void SetCurrentWeapon(int p_id, BYTE weaponID);
 
-	void Aimbot(int p_id);
 	void Aimbot();
+	void Aimbot(int p_id);
 	void StabilizeCam(int specID);
 	void Tele2Cursor();
 	void Tele2Player(int p_id);
 	void Tele2ClosestEnemy();
 	void FixBarret();
+	void SpeedHack(bool isRight);
 	
 	void CheckEvents();
 	void SetSettings(Settings newSettings);
@@ -129,8 +130,6 @@ public:
 	Window winset;
 	Enemy enemyList[30];
 
-	
-	
 private:
 
 	float CalcDistance(Vec2 pos1, Vec2 pos2);

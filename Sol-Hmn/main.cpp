@@ -9,7 +9,6 @@ int main()
 
 	SolHook Sol(settings);
 	
-	
 	while (1)
 	{
 		Sol.RefreshVal();
