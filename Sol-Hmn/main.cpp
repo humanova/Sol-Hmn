@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "SolHook.h"
 
 int main()
@@ -14,10 +12,8 @@ int main()
 		Sol.RefreshVal();
 		Sol.RefreshEnemy();
 		Sol.CheckEvents();
-		
 		Sleep(1);
 	}
 
 	return 0;
 }
-

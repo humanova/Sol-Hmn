@@ -7,10 +7,38 @@ struct Vec2
 	float y = 0;
 };
 
+struct Vec2d
+{
+	double x = 0;
+	double y = 0;
+};
+
 class SolHook
 {
 
 public:
+	
+	struct Bullet
+	{
+		int owner = 0;
+		BYTE ownerWeapon = 0;
+		bool active = 0;
+		Vec2 pos = Vec2();
+		Vec2 vel = Vec2();
+	};
+
+	struct Player
+	{
+		int id = 0;
+		float health = 0;
+		Vec2 pos = Vec2();
+		Vec2 vel = Vec2();
+	};
+
+	struct Enemy
+	{
+		Player player;
+	}emptyEnemy;
 
 	struct Window
 	{
@@ -18,13 +46,15 @@ public:
 		float ScreenRatio;
 		float CursorH;
 		float CursorW;
-		float Game2WindowRatioY;
-		float Game2WindowRatioX;
+		double Game2WindowRatioY;
+		double Game2WindowRatioX;
+		double Window2GameRatioY;
+		double Window2GameRatioX;
 
-		Vec2 CamCursorDiffGame;
-		Vec2 CamCursorDiffWindow;
-		float CamCursorRatioGame;
-		float CamCursorRatioWindow;
+		Vec2d CamCursorDiffGame;
+		Vec2d CamCursorDiffWindow;
+		double CamCursorRatioGame;
+		double CamCursorRatioWindow;
 	};
 
 	struct gameVal
@@ -38,20 +68,12 @@ public:
 		int enemyCount;
 		int playerID;
 		int aimbotID;
-		int unAimbotID;
+		bool aimbotting;
 		int stickiedPlayerID;
 		BYTE playerTeam;
 		BYTE currentWeapon;
 		float currentWeaponVel;
 	};
-
-	struct Enemy
-	{
-		int id = 0;
-		float health = 0;
-		Vec2 pos = Vec2();
-		Vec2 vel = Vec2();
-	}emptyEnemy;
 
 	struct Settings
 	{
@@ -63,9 +85,10 @@ public:
 		bool stick2player = 1;
 		bool aimbot = 1;
 		bool speedHack = 1;
-		float aimbotCursorDistance = 40;
+		int aimbotYOffset = -10;
+		float aimbotCursorDistance = 75;
 		float aimbotPlayerDistance = 635;
-		float speedHackVal = 0.00007;
+		float speedHackVal = 0.000007;
 
 	}defaultSettings;
 
@@ -88,6 +111,9 @@ public:
 	Vec2 GetWindowSize();
 
 	int GetPlayerID();
+	Player GetPlayer(int p_id);
+	Bullet GetBullet(int bullet_id);
+
 	int GetPlayerCount();
 	Vec2 GetPlayerPos(int p_id);
 	Vec2 GetCameraPos();
@@ -104,8 +130,11 @@ public:
 	void SetPlayerPos(int p_id, Vec2 pl_pos);
 	void SetCameraPos(Vec2 cam_pos);
 	void SetPlayerVel(int p_id, Vec2 pl_vel);
+	void SetBulletPos(int bullet_id, Vec2 pos);
+	void SetBulletVel(int bullet_id, Vec2 vel);
 	void SetCursorPos(Vec2 cursor_pos);
 	void SetCurrentWeapon(int p_id, BYTE weaponID);
+	void SetBullet(int bullet_id, Vec2 pos, Vec2 vel);
 
 	void Aimbot();
 	void Aimbot(int p_id);
@@ -120,6 +149,7 @@ public:
 	void SetSettings(Settings newSettings);
 	void RefreshVal();
 	void RefreshEnemy();
+	void RefreshBullet();
 
 	void DebugSomething();
 	void PrintStatus();
@@ -133,6 +163,7 @@ public:
 private:
 
 	float CalcDistance(Vec2 pos1, Vec2 pos2);
+	Bullet GetPlayerBullet();
 	Enemy GetClosestEnemy();
 	Enemy GetClosestEnemyCursor();
 	Vec2 Window2Map();

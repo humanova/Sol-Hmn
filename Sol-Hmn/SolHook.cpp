@@ -44,13 +44,37 @@ Vec2 SolHook::GetWindowSize()
 	return winSize;
 }
 
-
 // ============== READ FUNCTIONS ===============
 
 int SolHook::GetPlayerID()
 {
 	int p_id = readMem<int>(game_handle, SoldatOffset::camID);
 	return p_id;
+}
+
+SolHook::Player SolHook::GetPlayer(int p_id)
+{
+	Player player;
+	player.id = p_id;
+	player.health = GetPlayerHealth(p_id);
+	player.pos = GetPlayerPos(p_id);
+	player.vel = GetPlayerVel(p_id);
+
+	return player;
+}
+
+SolHook::Bullet SolHook::GetBullet(int bullet_id)
+{
+	Bullet bullet;
+	bullet.owner = readMem<int>(game_handle, SoldatOffset::bulletOwner + ((bullet_id - 1) * bulletOffset));
+	bullet.ownerWeapon = readMem<BYTE>(game_handle, SoldatOffset::bulletOwnerWeapon + ((bullet_id - 1) * bulletOffset));
+	bullet.active = readMem<BYTE>(game_handle, SoldatOffset::bulletActive + ((bullet_id - 1) * bulletOffset));
+	bullet.pos.x = readMem<float>(game_handle, SoldatOffset::bulletX + ((bullet_id - 1) * bulletOffset));
+	bullet.pos.y = readMem<float>(game_handle, SoldatOffset::bulletY + ((bullet_id - 1) * bulletOffset));
+	bullet.vel.x = readMem<float>(game_handle, SoldatOffset::bulletVelX + ((bullet_id - 1) * bulletOffset));
+	bullet.vel.y = readMem<float>(game_handle, SoldatOffset::bulletVelY + ((bullet_id - 1) * bulletOffset));
+	
+	return bullet;
 }
 
 int SolHook::GetPlayerCount()
@@ -92,10 +116,6 @@ float SolHook::GetPlayerHealth(int p_id)
 float SolHook::GetCurrentWeaponVel()
 {
 	float weaponVel = readMem<float>(game_handle, SoldatOffset::playerWeaponVel);
-	if (weaponVel == 0)
-	{
-		return 1;
-	}
 	return weaponVel;
 }
 
@@ -151,6 +171,18 @@ void SolHook::SetPlayerVel(int p_id, Vec2 pl_vel)
 	writeMem<float>(game_handle, SoldatOffset::playerY + ((p_id - 1) * 0x8), pl_vel.y);
 }
 
+void SolHook::SetBulletPos(int bullet_id, Vec2 pos)
+{
+	writeMem<float>(game_handle, SoldatOffset::bulletX + ((bullet_id - 1) * bulletOffset), pos.x);
+	writeMem<float>(game_handle, SoldatOffset::bulletY + ((bullet_id - 1) * bulletOffset), pos.y);
+}
+
+void SolHook::SetBulletVel(int bullet_id, Vec2 vel)
+{
+	writeMem<float>(game_handle, SoldatOffset::bulletVelX +((bullet_id - 1) * bulletOffset), vel.x);
+	writeMem<float>(game_handle, SoldatOffset::bulletVelY +((bullet_id - 1) * bulletOffset), vel.y);
+}
+
 void SolHook::SetCursorPos(Vec2 cursor_pos)
 {
 	writeMem<float>(game_handle, SoldatOffset::playerCursorX, cursor_pos.x);
@@ -162,37 +194,58 @@ void SolHook::SetCurrentWeapon(int p_id, BYTE weaponID)
 	writeMem<BYTE>(game_handle, SoldatOffset::playerWeapon + ((p_id - 1) * playerOffset), weaponID);
 }
 
+void SolHook::SetBullet(int bullet_id, Vec2 pos, Vec2 vel)
+{
+	SetBulletPos(bullet_id, pos);
+	SetBulletVel(bullet_id, vel);
+}
+
 void SolHook::Aimbot(int p_id)
 {
 	Vec2 pPos = GetPlayerPos(p_id);
 	Vec2 aimPos = Map2Cursor(pPos);
+	aimPos.y += settings.aimbotYOffset;
 
 	SetCursorPos(aimPos);
 }
 
 void SolHook::Aimbot()
 {
-	Enemy enemy = GetClosestEnemyCursor();
-	float enemyCursorDistance = CalcDistance(enemy.pos, val.mapCursorPos);
-	float enemyDistance = CalcDistance(enemy.pos, val.playerPos);
-	
+	Enemy enemy;
+	if (val.aimbotID != 0 && GetPlayerHealth(val.aimbotID) > 0)
+	{
+		enemy.player = GetPlayer(val.aimbotID);
+	}
+	else
+	{
+		enemy = GetClosestEnemyCursor();
+	}
 
-	if ((enemy.id != 0) && 
-		(enemy.id != val.unAimbotID) && 
-		(enemyCursorDistance < settings.aimbotCursorDistance) && 
-		(enemyDistance < settings.aimbotPlayerDistance))
+	float enemyCursorDistance = CalcDistance(enemy.player.pos, val.mapCursorPos);
+	float enemyDistance = CalcDistance(enemy.player.pos, val.playerPos);
+
+	if ((val.aimbotID != 0) && (enemyCursorDistance < settings.aimbotCursorDistance) || 
+		((enemy.player.id != 0) &&
+		(enemyCursorDistance < settings.aimbotCursorDistance) &&
+		(enemyDistance < settings.aimbotPlayerDistance) &&
+		(val.currentWeaponVel != 0.0f)))
 	{
 		float bulletTime = enemyDistance / val.currentWeaponVel;
-		Vec2 aimPos = Map2Cursor(enemy.pos);
-		aimPos.x += -1 * (GetPlayerVel(val.playerID).x - (enemy.vel.x * bulletTime)) * (1 / winset.Game2WindowRatioX);
-		aimPos.y += -1 * (GetPlayerVel(val.playerID).y - (enemy.vel.y * bulletTime)) * (1 / winset.Game2WindowRatioY);
+		Vec2 aimPos = Map2Cursor(enemy.player.pos);
+		aimPos.x += ((enemy.player.vel.x * bulletTime)) * winset.Game2WindowRatioX;
+		aimPos.y += settings.aimbotYOffset + ((enemy.player.vel.y * bulletTime)) * winset.Game2WindowRatioY;
+
+		//aimPos.x += -1 * (val.playerVel.x - (enemy.player.vel.x * bulletTime)) * (1 / winset.Game2WindowRatioX);
+		//aimPos.y += -1 * (val.playerVel.x - (enemy.player.vel.y * bulletTime)) * (1 / winset.Game2WindowRatioY);
 
 		SetCursorPos(aimPos);
-		val.aimbotID = enemy.id;
+		val.aimbotID = enemy.player.id;
+		val.aimbotting = 1;
 	}
 	else
 	{
 		val.aimbotID = 0;
+		val.aimbotting = 0;
 	}
 }
 
@@ -214,35 +267,27 @@ void SolHook::Tele2Player(int p_id)
 void SolHook::Tele2ClosestEnemy()
 {
 	Enemy closestEnemy = GetClosestEnemy();
-	SetPlayerPos(val.playerID, closestEnemy.pos);
+	SetPlayerPos(val.playerID, closestEnemy.player.pos);
 }
 
 void SolHook::FixBarret()
 {
+	if ((val.currentWeapon == 8) && (toggles.aimbot && settings.aimbot))
+	{
+		writeMem<short>(game_handle, SoldatOffset::barretStartupTime, 7);
+	}
+	else
+	{
+		writeMem<short>(game_handle, SoldatOffset::barretStartupTime, 0);
+	}
 	writeMem<int>(game_handle, SoldatOffset::barretBink, 0);
 	writeMem<float>(game_handle, SoldatOffset::barretMovAcc, 0);
-	writeMem<short>(game_handle, SoldatOffset::barretStartupTime, 0);
+	
 }
 
 void SolHook::SpeedHack(bool isRight)
 {
-	if (!(val.playerVel.x > 4.8) &&
-		!(val.playerVel.x < -4.8) &&
-		!(val.playerVel.x < 2 && val.playerVel.x > -2))
-	{
-		if (0 < val.playerVel.x < 5.5 && isRight)
-		{
-			Vec2 new_vel = val.playerVel;
-			new_vel.x += settings.speedHackVal;
-			SetPlayerVel(val.playerID, new_vel);
-		}
-		else if (0 > val.playerVel.x > -5.5 && !isRight)
-		{
-			Vec2 new_vel = val.playerVel;
-			new_vel.x -= settings.speedHackVal;
-			SetPlayerVel(val.playerID, new_vel);
-		}
-	}
+
 }
 
 void SolHook::CheckEvents()
@@ -305,11 +350,15 @@ void SolHook::CheckEvents()
 
 	if (settings.aimbot & toggles.aimbot)
 	{
-		if (GetAsyncKeyState(VK_CONTROL) & 1)
+		if (GetKeyState(VK_LBUTTON) < 0)
 		{
-			val.unAimbotID = val.aimbotID;
+			Aimbot();
 		}
-		Aimbot();
+		else
+		{
+			val.aimbotID = 0;
+			val.aimbotting = 0;
+		}
 	}
 
 	if (settings.speedHack & toggles.speedHack)
@@ -374,10 +423,10 @@ void SolHook::RefreshEnemy()
 					en += 1;
 
 					Enemy enemy;
-					enemy.id = pl;
-					enemy.health = GetPlayerHealth(pl);
-					enemy.pos = GetPlayerPos(pl);
-					enemy.vel = GetPlayerVel(pl);
+					enemy.player.id = pl;
+					enemy.player.health = GetPlayerHealth(pl);
+					enemy.player.pos = GetPlayerPos(pl);
+					enemy.player.vel = GetPlayerVel(pl);
 
 					enemyList[en] = enemy;
 				}
@@ -391,6 +440,12 @@ void SolHook::RefreshEnemy()
 	}while (pl <= val.playerCount);
 
 	val.enemyCount = en;
+}
+
+void SolHook::RefreshBullet()
+{
+	Bullet bullet;
+	do
 }
 
 void SolHook::DebugSomething()
@@ -414,7 +469,6 @@ void SolHook::DebugSomething()
 	winset.CamCursorRatioGame = (winset.CamCursorDiffGame.x / winset.CamCursorDiffGame.y);
 	winset.CamCursorRatioWindow = (winset.CamCursorDiffWindow.x / winset.CamCursorDiffWindow.y);
 }
-
 
 void SolHook::PrintStatus()
 {
@@ -461,8 +515,8 @@ SolHook::Enemy SolHook::GetClosestEnemy()
 			}
 			else
 			{
-				if (CalcDistance(enemyList[en].pos, val.playerPos) < 
-					CalcDistance(closestEnemy.pos, val.playerPos))
+				if (CalcDistance(enemyList[en].player.pos, val.playerPos) < 
+					CalcDistance(closestEnemy.player.pos, val.playerPos))
 				{
 					closestEnemy = enemyList[en];
 				}
@@ -490,7 +544,7 @@ SolHook::Enemy SolHook::GetClosestEnemyCursor()
 			}
 			else
 			{
-				if (CalcDistance(enemyList[en].pos, val.mapCursorPos) < CalcDistance(closestEnemy.pos, val.mapCursorPos))
+				if (CalcDistance(enemyList[en].player.pos, val.mapCursorPos) < CalcDistance(closestEnemy.player.pos, val.mapCursorPos))
 				{
 					closestEnemy = enemyList[en];
 				}
@@ -539,19 +593,27 @@ void SolHook::CalcWinset()
 
 	if (winset.ScreenRatio < 1.5)
 	{
-		winset.Game2WindowRatioY = 1.0204;
-		winset.Game2WindowRatioX = 1.0204;
-
+		winset.Game2WindowRatioY = 1.0204081217448;
+		winset.Game2WindowRatioX = 1.0204078674316;
+		
+		winset.Window2GameRatioY = 1.0 / winset.Game2WindowRatioX;
+		winset.Window2GameRatioX = 1.0 / winset.Game2WindowRatioX;
 	}
 	else if (winset.ScreenRatio > 1.5 && winset.ScreenRatio < 1.70)
 	{
 		winset.Game2WindowRatioY = 1.0217;
 		winset.Game2WindowRatioX = 0.9188;
+
+		winset.Window2GameRatioY = 1.0 / winset.Game2WindowRatioX;
+		winset.Window2GameRatioX = 1.0 / winset.Game2WindowRatioX;
 	}
 	else if (winset.ScreenRatio > 1.70)
 	{
 		winset.Game2WindowRatioY = 1.1241;
 		winset.Game2WindowRatioX = 0.5093;
+
+		winset.Window2GameRatioY = 1.0 / winset.Game2WindowRatioX;
+		winset.Window2GameRatioX = 1.0 / winset.Game2WindowRatioX;
 	}
 	
 }

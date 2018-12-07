@@ -37,8 +37,23 @@ enum SoldatOffset
 
 	scoreToggle = 0x5EC764,
 
+	bulletOffset = 0x57,
+	bulletOwner = 0xA579FA,
+	bulletOwnerWeapon = 0xA579FB,
+	bulletActive = 0xA579F4,
+	bulletX = 0x76ED1C,
+	bulletY = bulletX + 0x4,
+	bulletVelX = 0x76FE9C,
+	bulletVelY = bulletVelX + 0x4,
+	
+
 	WindowWidth = 0x5E0C40,
 	WindowHeight = WindowWidth + 0x4
 };
 
 
+enum GostekOffset
+{
+	exactPos = 0,
+	torso = -11,
+};
