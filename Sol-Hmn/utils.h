@@ -37,7 +37,7 @@ enum SoldatOffset
 
 	scoreToggle = 0x5EC764,
 
-	bulletOffset = 0x57,
+	bulletOffset = 0x56,
 	bulletOwner = 0xA579FA,
 	bulletOwnerWeapon = 0xA579FB,
 	bulletActive = 0xA579F4,

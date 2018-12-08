@@ -20,7 +20,8 @@ public:
 	
 	struct Bullet
 	{
-		int owner = 0;
+		int id;
+		BYTE owner = 0;
 		BYTE ownerWeapon = 0;
 		bool active = 0;
 		Vec2 pos = Vec2();
@@ -38,7 +39,7 @@ public:
 	struct Enemy
 	{
 		Player player;
-	}emptyEnemy;
+	};
 
 	struct Window
 	{
@@ -65,6 +66,8 @@ public:
 		Vec2 cursorPos;
 		Vec2 mapCursorPos;
 		int playerCount;
+		int activeBulletNum;
+		int activeSelfBulletNum;
 		int enemyCount;
 		int playerID;
 		int aimbotID;
@@ -88,7 +91,7 @@ public:
 		int aimbotYOffset = -10;
 		float aimbotCursorDistance = 75;
 		float aimbotPlayerDistance = 635;
-		float speedHackVal = 0.000007;
+		double speedHackVal = 0.000007;
 
 	}defaultSettings;
 
@@ -112,7 +115,10 @@ public:
 
 	int GetPlayerID();
 	Player GetPlayer(int p_id);
+	Enemy GetClosestEnemy();
+	Enemy GetClosestEnemyCursor();
 	Bullet GetBullet(int bullet_id);
+	void GetSelfBullet();
 
 	int GetPlayerCount();
 	Vec2 GetPlayerPos(int p_id);
@@ -138,6 +144,7 @@ public:
 
 	void Aimbot();
 	void Aimbot(int p_id);
+	void MagicBullet();
 	void StabilizeCam(int specID);
 	void Tele2Cursor();
 	void Tele2Player(int p_id);
@@ -159,18 +166,18 @@ public:
 	gameVal val;
 	Window winset;
 	Enemy enemyList[30];
+	Bullet bulletList[50];
+	Bullet selfBulletList[25];
 
 private:
 
+	HANDLE game_handle;
 	float CalcDistance(Vec2 pos1, Vec2 pos2);
-	Bullet GetPlayerBullet();
-	Enemy GetClosestEnemy();
-	Enemy GetClosestEnemyCursor();
+
 	Vec2 Window2Map();
 	void CalcWinset();
-	
+
 	void CheckToggles();
-	HANDLE game_handle;
 	Vec2 Map2Cursor(Vec2 pos);
 	void TypeRed(int type);
 	void TypeGreen(int type);

@@ -66,13 +66,14 @@ SolHook::Player SolHook::GetPlayer(int p_id)
 SolHook::Bullet SolHook::GetBullet(int bullet_id)
 {
 	Bullet bullet;
+	bullet.id = bullet_id;
 	bullet.owner = readMem<int>(game_handle, SoldatOffset::bulletOwner + ((bullet_id - 1) * bulletOffset));
 	bullet.ownerWeapon = readMem<BYTE>(game_handle, SoldatOffset::bulletOwnerWeapon + ((bullet_id - 1) * bulletOffset));
 	bullet.active = readMem<BYTE>(game_handle, SoldatOffset::bulletActive + ((bullet_id - 1) * bulletOffset));
-	bullet.pos.x = readMem<float>(game_handle, SoldatOffset::bulletX + ((bullet_id - 1) * bulletOffset));
-	bullet.pos.y = readMem<float>(game_handle, SoldatOffset::bulletY + ((bullet_id - 1) * bulletOffset));
-	bullet.vel.x = readMem<float>(game_handle, SoldatOffset::bulletVelX + ((bullet_id - 1) * bulletOffset));
-	bullet.vel.y = readMem<float>(game_handle, SoldatOffset::bulletVelY + ((bullet_id - 1) * bulletOffset));
+	bullet.pos.x = readMem<float>(game_handle, SoldatOffset::bulletX + ((bullet_id - 1) * 0x8));
+	bullet.pos.y = readMem<float>(game_handle, SoldatOffset::bulletY + ((bullet_id - 1) * 0x8));
+	bullet.vel.x = readMem<float>(game_handle, SoldatOffset::bulletVelX + ((bullet_id - 1) * 0x8));
+	bullet.vel.y = readMem<float>(game_handle, SoldatOffset::bulletVelY + ((bullet_id - 1) * 0x8));
 	
 	return bullet;
 }
@@ -121,7 +122,7 @@ float SolHook::GetCurrentWeaponVel()
 
 BYTE SolHook::GetPlayerTeam(int p_id)
 {
-	float plTeam = readMem<BYTE>(game_handle, SoldatOffset::playerTeam + ((p_id - 1) * playerOffset));
+	BYTE plTeam = readMem<BYTE>(game_handle, SoldatOffset::playerTeam + ((p_id - 1) * playerOffset));
 	return plTeam;
 }
 
@@ -207,6 +208,16 @@ void SolHook::Aimbot(int p_id)
 	aimPos.y += settings.aimbotYOffset;
 
 	SetCursorPos(aimPos);
+}
+
+void SolHook::MagicBullet()
+{
+	Enemy enemy = GetClosestEnemy();
+	for (int i = 0; i < val.activeSelfBulletNum; i++)
+	{
+		SetBullet(selfBulletList[i].id, enemy.player.pos, selfBulletList[i].vel);
+	}
+	
 }
 
 void SolHook::Aimbot()
@@ -403,18 +414,13 @@ void SolHook::RefreshVal()
 
 void SolHook::RefreshEnemy()
 {
-	bool isOnline;
-	Vec2 pos;
-	Vec2 vel;
-	float health;
-
 	int pl = 1;
 	int en = 0;
 	do
 	{
 		if (isPlayerOnline(pl))
 		{
-			enemyList[pl] = emptyEnemy;
+			enemyList[pl] = Enemy();
 
 			if (!(GetPlayerTeam(pl) == val.playerTeam))
 			{
@@ -445,7 +451,19 @@ void SolHook::RefreshEnemy()
 void SolHook::RefreshBullet()
 {
 	Bullet bullet;
-	do
+	int activeBulletNum = 0;
+
+	for (int i = 0; i < val.playerCount * 7; i++)
+	{
+		bulletList[i] = Bullet();
+		bullet = GetBullet(i);
+		if (bullet.owner != 0 && bullet.active)
+		{
+			bulletList[activeBulletNum] = bullet;
+			activeBulletNum++;
+		}
+	}
+	val.activeBulletNum = activeBulletNum;
 }
 
 void SolHook::DebugSomething()
@@ -496,6 +514,20 @@ float SolHook::CalcDistance(Vec2 pos1, Vec2 pos2)
 {
 	float distance = sqrt((pos1.x - pos2.x) * (pos1.x - pos2.x) + (pos1.y - pos2.y) * (pos1.y - pos2.y));
 	return distance;
+}
+
+void SolHook::GetSelfBullet()
+{
+	int myBulletNum = 0;
+	for (int i = 0; i < val.activeBulletNum; i++)
+	{
+		if (bulletList[i].owner == val.playerID)
+		{
+			selfBulletList[myBulletNum] = bulletList[i];
+			myBulletNum++;
+		}
+	}
+	val.activeSelfBulletNum = myBulletNum;
 }
 
 SolHook::Enemy SolHook::GetClosestEnemy()
