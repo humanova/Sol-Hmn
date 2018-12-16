@@ -1,6 +1,26 @@
+//Emir Erbasan (humanova) 2018
 #pragma once
 #include "proc.h"
 
+struct Vec2f
+{
+	float x = 0;
+	float y = 0;
+};
+
+struct Vec2d
+{
+	double x = 0;
+	double y = 0;
+};
+
+enum GostekOffset
+{
+	exactPos = 0,
+	torso = -11,
+};
+
+//Game addresses
 enum SoldatOffset
 {
 	playerOffset = 0xC5D0,
@@ -19,11 +39,8 @@ enum SoldatOffset
 	playerWeaponVel = 0x8E45C4,
 
 	playerHealth = 0x8CC004,
-
 	playerTeam = 0x8D8180,
-
 	playerAlive = 0x8D8017,
-
 	playerOnline = 0x8CBFF4,
 
 	playerCursorX = 0x5EC370,
@@ -46,14 +63,6 @@ enum SoldatOffset
 	bulletVelX = 0x76FE9C,
 	bulletVelY = bulletVelX + 0x4,
 	
-
 	WindowWidth = 0x5E0C40,
 	WindowHeight = WindowWidth + 0x4
-};
-
-
-enum GostekOffset
-{
-	exactPos = 0,
-	torso = -11,
 };

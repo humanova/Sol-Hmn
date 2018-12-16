@@ -1,17 +1,6 @@
+//Emir Erbasan (humanova) 2018
 #pragma once
 #include "utils.h"
-
-struct Vec2
-{
-	float x = 0;
-	float y = 0;
-};
-
-struct Vec2d
-{
-	double x = 0;
-	double y = 0;
-};
 
 class SolHook
 {
@@ -24,16 +13,16 @@ public:
 		BYTE owner = 0;
 		BYTE ownerWeapon = 0;
 		bool active = 0;
-		Vec2 pos = Vec2();
-		Vec2 vel = Vec2();
+		Vec2f pos = Vec2f();
+		Vec2f vel = Vec2f();
 	};
 
 	struct Player
 	{
 		int id = 0;
 		float health = 0;
-		Vec2 pos = Vec2();
-		Vec2 vel = Vec2();
+		Vec2f pos = Vec2f();
+		Vec2f vel = Vec2f();
 	};
 
 	struct Enemy
@@ -43,7 +32,7 @@ public:
 
 	struct Window
 	{
-		Vec2 WindowSize;
+		Vec2f WindowSize;
 		float ScreenRatio;
 		float CursorH;
 		float CursorW;
@@ -60,11 +49,11 @@ public:
 
 	struct gameVal
 	{
-		Vec2 playerPos;
-		Vec2 playerVel;
-		Vec2 cameraPos;
-		Vec2 cursorPos;
-		Vec2 mapCursorPos;
+		Vec2f playerPos;
+		Vec2f playerVel;
+		Vec2f cameraPos;
+		Vec2f cursorPos;
+		Vec2f mapCursorPos;
 		int playerCount;
 		int activeBulletNum;
 		int activeSelfBulletNum;
@@ -88,7 +77,8 @@ public:
 		bool stick2player = 1;
 		bool aimbot = 1;
 		bool speedHack = 1;
-		int aimbotYOffset = -10;
+		bool magicBullet = 1;
+		int aimbotYOffset = -0;
 		float aimbotCursorDistance = 75;
 		float aimbotPlayerDistance = 635;
 		double speedHackVal = 0.000007;
@@ -105,42 +95,46 @@ public:
 		bool stick2player = 0;
 		bool aimbot = 0;
 		bool speedHack = 0;
+		bool magicBullet = 0;
 	};
 
 	SolHook();
 	SolHook(Settings launchSettings);
+	void SetSettings(Settings newSettings);
 
 	HANDLE GetSoldatHandle();
-	Vec2 GetWindowSize();
+	Vec2f GetWindowSize();
 
 	int GetPlayerID();
 	Player GetPlayer(int p_id);
-	Enemy GetClosestEnemy();
-	Enemy GetClosestEnemyCursor();
-	Bullet GetBullet(int bullet_id);
-	void GetSelfBullet();
-
 	int GetPlayerCount();
-	Vec2 GetPlayerPos(int p_id);
-	Vec2 GetCameraPos();
-	Vec2 GetPlayerVel(int p_id);
+	Vec2f GetPlayerPos(int p_id);
+	Vec2f GetCameraPos();
+	Vec2f GetPlayerVel(int p_id);
 	float GetPlayerHealth(int p_id);
+	BYTE GetCurrentWeapon(int p_id);
 	float GetCurrentWeaponVel();
 	BYTE GetPlayerTeam(int p_id);
 
-	Vec2 GetCursorPos();
-	BYTE GetCurrentWeapon(int p_id);
+	Vec2f GetCursorPos();
 	bool isScoreBoardOn();
 	bool isPlayerOnline(int p_id);
 
-	void SetPlayerPos(int p_id, Vec2 pl_pos);
-	void SetCameraPos(Vec2 cam_pos);
-	void SetPlayerVel(int p_id, Vec2 pl_vel);
-	void SetBulletPos(int bullet_id, Vec2 pos);
-	void SetBulletVel(int bullet_id, Vec2 vel);
-	void SetCursorPos(Vec2 cursor_pos);
+	void RefreshEnemy();
+	Enemy GetClosestEnemy();
+	Enemy GetClosestEnemyCursor();
+	void RefreshBullet();
+	Bullet GetBullet(int bullet_id);
+	void GetSelfBullet();
+	
+	void SetPlayerPos(int p_id, Vec2f pl_pos);
+	void SetCameraPos(Vec2f cam_pos);
+	void SetPlayerVel(int p_id, Vec2f pl_vel);
+	void SetBulletPos(int bullet_id, Vec2f pos);
+	void SetBulletVel(int bullet_id, Vec2f vel);
+	void SetCursorPos(Vec2f cursor_pos);
 	void SetCurrentWeapon(int p_id, BYTE weaponID);
-	void SetBullet(int bullet_id, Vec2 pos, Vec2 vel);
+	void SetBullet(int bullet_id, Vec2f pos, Vec2f vel);
 
 	void Aimbot();
 	void Aimbot(int p_id);
@@ -152,13 +146,10 @@ public:
 	void FixBarret();
 	void SpeedHack(bool isRight);
 	
-	void CheckEvents();
-	void SetSettings(Settings newSettings);
 	void RefreshVal();
-	void RefreshEnemy();
-	void RefreshBullet();
+	void CheckEvents();
 
-	void DebugSomething();
+	void DebugWinRatio();
 	void PrintStatus();
 
 	Settings settings;
@@ -171,17 +162,18 @@ public:
 
 private:
 
-	HANDLE game_handle;
-	float CalcDistance(Vec2 pos1, Vec2 pos2);
-
-	Vec2 Window2Map();
+	float CalcDistance(Vec2f pos1, Vec2f pos2);
 	void CalcWinset();
 
+	Vec2f Window2Map();
+	Vec2f Map2Cursor(Vec2f pos);
+
 	void CheckToggles();
-	Vec2 Map2Cursor(Vec2 pos);
+
 	void TypeRed(int type);
 	void TypeGreen(int type);
 	void TypeNormal();
-
+	
+	HANDLE game_handle;
 };
 
