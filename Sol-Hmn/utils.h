@@ -51,6 +51,8 @@ enum SoldatOffset
 	barretBink = 0x5EB4C0,
 	barretMovAcc = 0x5EB4BC,
 	barretStartupTime = 0x5EB4D0,
+	shootInterval = 0x8D7FCC,
+	shootStartupTime = 0x8D7FD4,
 
 	scoreToggle = 0x5EC764,
 
