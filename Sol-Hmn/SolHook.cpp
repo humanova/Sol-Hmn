@@ -746,8 +746,6 @@ void SolHook::TypeGreen(int type)
 
 void SolHook::TypeNormal() {
 	int type = 2;
-	int colorValue = 7;
-	if (type == 1) { type = colorValue; }
-	else if (type != 1) { type = (type * 8) - (8 - colorValue); }
+	type = (type * 8) - 1;
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), type);
 }
