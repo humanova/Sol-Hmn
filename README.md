@@ -13,5 +13,7 @@
 	Memory addresses, structures, functions can differ version to version.
 	Even a small change on the game's source code may cause this project to not to work.
 
-![MagicBullet Demo](https://streamable.com/jimfc)
-![Aimbot Demo](https://www.youtube.com/watch?v=0sK8as7RMos)
+[Aimbot Demo](https://www.youtube.com/watch?v=0sK8as7RMos)
+
+[MagicBullet Demo](https://streamable.com/jimfc)
+
